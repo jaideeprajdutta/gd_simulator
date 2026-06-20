@@ -9,13 +9,23 @@ import pygame
 from dotenv import load_dotenv
 
 # Load .env from the project root
-load_dotenv(os.path.join(os.path.dirname(__file__), ".env"))
+env_path = os.path.join(os.path.dirname(__file__), ".env")
+if not os.path.exists(env_path):
+    raise RuntimeError(
+        f"Missing .env file at {env_path}\n"
+        "Please create a .env file with OPENROUTER_API_KEY=your_api_key_here"
+    )
+load_dotenv(env_path)
 
 # 1. Secured API Key
 api_key = os.getenv("OPENROUTER_API_KEY")
 if not api_key:
-    raise RuntimeError("Missing OPENROUTER_API_KEY in environment or .env file")
+    raise RuntimeError(
+        "Missing OPENROUTER_API_KEY in environment or .env file.\n"
+        "Please create a .env file with OPENROUTER_API_KEY=your_api_key_here"
+    )
 
+# Initialize OpenAI client with API key
 client = OpenAI(
     api_key=api_key,
     base_url="https://openrouter.ai/api/v1"
@@ -221,4 +231,5 @@ Return ONLY the response text.
 
     except Exception as e:
         print("\nERROR:")
-        print(e)
+        print(f"Error occurred at turn {turn}: {type(e).__name__}: {e}")
+        print("Continuing with next turn...")
