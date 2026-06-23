@@ -1,94 +1,184 @@
-import * as THREE from 'three';
-import { TalkingHead } from "talkinghead";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>First-Person GD Simulation</title>
+  <style>
+    body { margin: 0; background-color: #1a1a1a; overflow: hidden; font-family: sans-serif; }
+    #viewport { width: 100vw; height: 100vh; }
+    #ui-container { position: absolute; bottom: 30px; left: 50%; transform: translateX(-50%); z-index: 10; display: flex; gap: 10px; background: rgba(0,0,0,0.8); padding: 15px; border-radius: 10px; align-items: center; }
+    input { width: 300px; padding: 12px; font-size: 16px; border-radius: 6px; border: none; }
+    select { padding: 12px; font-size: 16px; border-radius: 6px; border: none; background: white; cursor: pointer; }
+    button { padding: 12px 24px; font-size: 16px; font-weight: bold; cursor: pointer; border-radius: 6px; border: none; background: #28a745; color: white; }
+    button:hover { background: #218838; }
+    button:disabled { background: #666; cursor: not-allowed; }
+    #status { color: white; position: absolute; top: 10px; left: 10px; font-family: monospace; font-size: 16px; z-index: 10; }
+  </style>
+</head>
+<body>
 
-const container = document.getElementById('viewport');
-const scene = new THREE.Scene();
-scene.background = new THREE.Color(0x1a1a1a);
-
-// 1. Fixed Camera Setup (Elevated, looking down at the entire table)
-const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-camera.position.set(0, 2.5, 4.5); // Fixed position: high up and pulled back
-camera.lookAt(0, 0.8, 0);       // Always locked onto the center of the table
-
-const renderer = new THREE.WebGLRenderer({ antialias: true });
-renderer.setSize(window.innerWidth, window.innerHeight);
-container.appendChild(renderer.domElement);
-
-// Global Lights
-scene.add(new THREE.AmbientLight(0xffffff, 1.2));
-const dirLight = new THREE.DirectionalLight(0xffffff, 1.5);
-dirLight.position.set(0, 5, 5);
-scene.add(dirLight);
-
-// 2. The Participants Dictionary
-const participants = {};
-
-// 3. Helper to Seat a Character
-async function seatParticipant(id, modelUrl, gender, angle) {
-  // Use avatarOnly: true so they don't override our fixed camera
-  const avatar = new TalkingHead(container, {
-    avatarOnly: true,
-    avatarOnlyCamera: camera
-  });
-
-  await avatar.showAvatar({ url: modelUrl, body: gender });
-
-  // Arrange them in a 2.5-meter circle around the center (0,0,0)
-  const radius = 2.5;
-  const x = radius * Math.cos(angle);
-  const z = radius * Math.sin(angle);
-
-  // Set position (assume sitting height adjustments if your models require it)
-  avatar.armature.position.set(x, 0, z);
+  <div id="status">Status: Loading Room...</div>
+  <div id="viewport"></div>
   
-  // Make them face the center of the discussion table
-  avatar.armature.lookAt(0, 0, 0);
-
-  scene.add(avatar.armature);
-  participants[id] = avatar;
-}
-
-// 4. Initialize the 6 Seated Characters
-async function initializeGD() {
-  // 6 Angles evenly divided around a 360-degree circle (2 * PI)
-  const angles = [
-    0, 
-    (2 * Math.PI) / 6, 
-    (4 * Math.PI) / 6, 
-    Math.PI, 
-    (8 * Math.PI) / 6, 
-    (10 * Math.PI) / 6
-  ];
-
-  // Load all 6 participants into their fixed positions
-  await seatParticipant("p1", "./avatars/char1.glb", "M", angles[0]);
-  await seatParticipant("p2", "./avatars/char2.glb", "F", angles[1]);
-  await seatParticipant("p3", "./avatars/char3.glb", "M", angles[2]);
-  await seatParticipant("p4", "./avatars/char4.glb", "F", angles[3]);
-  await seatParticipant("p5", "./avatars/char5.glb", "M", angles[4]);
-  await seatParticipant("p6", "./avatars/char6.glb", "F", angles[5]);
-
-  // Master animation loop updating all 6 sitting characters simultaneously
-  const clock = new THREE.Clock();
-  function animate() {
-    requestAnimationFrame(animate);
-    const delta = clock.getDelta() * 1000;
+  <div id="ui-container">
+    <input type="text" id="text-input" value="I think we should focus on the primary core objectives first." />
     
-    // Keeps everyone breathing, blinking, and active while waiting
-    Object.values(participants).forEach(avatar => avatar.animate(delta));
+    <select id="speaker-select">
+      <option value="Person1">Person 1 (Left)</option>
+      <option value="Person2">Person 2 (Far Left)</option>
+      <option value="Person3">Person 3 (Opposite You)</option>
+      <option value="Person4">Person 4 (Far Right)</option>
+      <option value="Person5">Person 5 (Right)</option>
+    </select>
+
+    <button id="speak-btn" disabled>Loading...</button>
+  </div>
+
+  <script type="importmap">
+    {
+      "imports": {
+        "three": "https://cdn.jsdelivr.net/npm/three@0.180.0/build/three.module.js/+esm",
+        "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.180.0/examples/jsm/",
+        "talkinghead": "./modules/talkinghead.mjs",
+        "headtts": "https://cdn.jsdelivr.net/npm/@met4citizen/headtts@1.3/+esm"
+      }
+    }
+  </script>
+
+  <script type="module">
+    import * as THREE from 'three';
+    import { TalkingHead } from "talkinghead";
+    import { HeadTTS } from "headtts";
+
+    const container = document.getElementById('viewport');
+    const inputField = document.getElementById('text-input');
+    const speakerSelect = document.getElementById('speaker-select');
+    const speakBtn = document.getElementById('speak-btn');
+    const statusText = document.getElementById('status');
+
+    const scene = new THREE.Scene();
+    scene.background = new THREE.Color(0x111111);
+
+    // ========================================================
+    // FIRST-PERSON POV CAMERA SETUP
+    // ========================================================
+    const radius = 2.2; // Distance from center of table to chairs
+    const camera = new THREE.PerspectiveCamera(50, window.innerWidth / window.innerHeight, 0.1, 1000);
     
-    renderer.render(scene, camera);
-  }
-  animate();
-}
+    // You sit at the bottom of the circle (Angle = -PI/2)
+    // Your eye level height while sitting is roughly 1.3 meters
+    camera.position.set(0, 1.3, radius); 
+    
+    // Your eyes look slightly up across the center of the table towards Person 3
+    camera.lookAt(0, 1.2, -0.5); 
 
-// 5. Connect your OpenRouter text & local audio module output here
-export async function triggerSpeaker(participantId, generatedAudioData) {
-  const speaker = participants[participantId];
-  if (speaker) {
-    // Only the specified character plays audio and performs perfect local lip-sync
-    speaker.speakAudio(generatedAudioData);
-  }
-}
+    const renderer = new THREE.WebGLRenderer({ antialias: true });
+    renderer.setSize(window.innerWidth, window.innerHeight);
+    container.appendChild(renderer.domElement);
 
-initializeGD().catch(console.error);
+    // Lighting up the face of everyone in the circle
+    scene.add(new THREE.AmbientLight(0xffffff, 1.0));
+    const overheadLight = new THREE.DirectionalLight(0xffffff, 1.5);
+    overheadLight.position.set(0, 4, 0);
+    scene.add(overheadLight);
+
+    const participants = {};
+    let tts;
+
+    async function loadCharacter(name, modelFile, gender, angle) {
+      const avatar = new TalkingHead(container, { avatarOnly: true, avatarOnlyCamera: camera });
+      await avatar.showAvatar({ url: `./avatars/${modelFile}`, body: gender });
+      
+      // Position characters smoothly around the conference table circular layout
+      const x = radius * Math.cos(angle);
+      const z = radius * Math.sin(angle);
+      
+      avatar.armature.position.set(x, 0, z);
+      
+      // Make them look slightly off-center so they look at the group, or look towards your general area
+      avatar.armature.lookAt(0, 1.2, 0);
+      
+      scene.add(avatar.armature);
+      participants[name] = avatar;
+    }
+
+    async function initRoom() {
+      try {
+        statusText.innerText = "Status: Seating participants around you...";
+        
+        // 5 Other positions spread across a semi-circle in front of you
+        // Leaving your spot (0, 1.3, radius) wide open for your camera POV
+        await loadCharacter("Person1", "brunette-t.glb", "F", -0.5);          // Close Left
+        await loadCharacter("Person2", "brunette-t.glb", "F", 0.6);           // Far Left
+        await loadCharacter("Person3", "brunette-t.glb", "F", Math.PI / 2);   // Straight Across From You
+        await loadCharacter("Person4", "brunette-t.glb", "F", 2.5);           // Far Right
+        await loadCharacter("Person5", "brunette-t.glb", "F", 3.7);           // Close Right
+
+        statusText.innerText = "Status: Initializing Local AI Voice Box...";
+        
+        tts = new HeadTTS({
+          workerModule: "https://cdn.jsdelivr.net/npm/@met4citizen/headtts@1.3/modules/worker-tts.mjs",
+          dictionaryURL: "https://cdn.jsdelivr.net/npm/@met4citizen/headtts@1.3/dictionaries/"
+        });
+        
+        tts.onmessage = (message) => {
+          if (message.type === "progress") {
+            statusText.innerText = "Status: Downloading AI Voice (First run layout adjustment...)";
+          }
+          if (message.type === "audio") {
+            const activeSpeaker = speakerSelect.value;
+            participants[activeSpeaker].speakAudio(message.data);
+            
+            statusText.innerText = "Status: Ready!";
+            speakBtn.disabled = false;
+            speakBtn.innerText = "Make them Speak";
+          }
+        };
+
+        statusText.innerText = "Status: Ready! (First generation will download 80MB AI file)";
+        speakBtn.innerText = "Make them Speak";
+        speakBtn.disabled = false;
+
+        const clock = new THREE.Clock();
+        function animate() {
+          requestAnimationFrame(animate);
+          const delta = clock.getDelta() * 1000;
+          // All characters blink/breathe in real-time sitting across from you
+          Object.values(participants).forEach(avatar => avatar.animate(delta));
+          renderer.render(scene, camera);
+        }
+        animate();
+      } catch (e) {
+        console.error("Setup failed:", e);
+        statusText.innerText = "Status: Error layout configuration failed.";
+      }
+    }
+
+    speakBtn.addEventListener('click', async () => {
+      const text = inputField.value.trim();
+      if (!text) return;
+
+      speakBtn.disabled = true;
+      speakBtn.innerText = "Processing Voice...";
+      statusText.innerText = `Status: Synthesizing speech for ${speakerSelect.value}...`;
+
+      try {
+        await tts.synthesize({ input: text });
+      } catch (error) {
+        alert("Voice generation failed: " + error.message);
+        speakBtn.disabled = false;
+        speakBtn.innerText = "Make them Speak";
+      }
+    });
+
+    initRoom();
+
+    window.addEventListener('resize', () => {
+      camera.aspect = window.innerWidth / window.innerHeight;
+      camera.updateProjectionMatrix();
+      renderer.setSize(window.innerWidth, window.innerHeight);
+    });
+  </script>
+</body>
+</html>
