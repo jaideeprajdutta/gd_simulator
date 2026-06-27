@@ -244,6 +244,11 @@ export default class AvatarController {
       .copy(this._targetLookPosition)
       .sub(worldPos)
       .normalize();
+    
+    // Negate the direction because ReadyPlayerMe / standard GLTF models look forward along +Z,
+    // but Three.js Matrix4.lookAt assumes the viewer is looking down -Z.
+    direction.negate();
+
     const up = new THREE.Vector3(0, 1, 0);
     const targetQuat = new THREE.Quaternion();
     const m4 = new THREE.Matrix4();
