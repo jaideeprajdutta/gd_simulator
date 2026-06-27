@@ -96,6 +96,8 @@ export default function Avatar({
   useEffect(() => {
     if (!controllerRef.current || !seatPositions || seatPositions.length === 0) return;
 
+    const FACE_HEIGHT = 1.5;
+
     const isSpeaker = speakerSeatIndex === seatIndex;
     const hasSpeaker = speakerSeatIndex !== null && speakerSeatIndex !== undefined;
 
@@ -104,9 +106,11 @@ export default function Avatar({
         targetSeatIndex !== null && targetSeatIndex !== undefined
           ? targetSeatIndex
           : (seatIndex + Math.floor(seatPositions.length / 2)) % seatPositions.length;
-      controllerRef.current.lookAt(seatPositions[targetIdx]);
+      const pos = seatPositions[targetIdx];
+      controllerRef.current.lookAt(new THREE.Vector3(pos.x, FACE_HEIGHT, pos.z));
     } else if (hasSpeaker) {
-      controllerRef.current.lookAt(seatPositions[speakerSeatIndex]);
+      const pos = seatPositions[speakerSeatIndex];
+      controllerRef.current.lookAt(new THREE.Vector3(pos.x, FACE_HEIGHT, pos.z));
     } else {
       controllerRef.current.lookAt(null);
     }
