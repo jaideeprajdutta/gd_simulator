@@ -1,0 +1,7 @@
+openai
+edge-tts
+pygame==2.0.3
+python-dotenv
+SpeechRecognition
+soundfile
+tqdm
