@@ -21,3 +21,6 @@ To minimize latency, the next speaker's text and audio are pre-generated in the 
 ## Interruption Mechanics
 If the user speaks or types, the interruption is queued on the server, allowing the AI to finish naturally before granting the floor.
 
+## Seating & Eye Contact
+Contains a 6-seat table geometry with the 6th seat reserved for the USER, directing all AI gaze targeting to seat 5.
+
