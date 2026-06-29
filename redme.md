@@ -27,3 +27,6 @@ Contains a 6-seat table geometry with the 6th seat reserved for the USER, direct
 ## Troubleshooting
 Check EdgeTTS dependencies if voice files fail to generate.
 
+## Customizations
+Modify voice maps in server.cjs to add custom speakers.
+
