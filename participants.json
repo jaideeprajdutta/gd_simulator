@@ -1,6 +1,8 @@
-P1: {"role": "Aggressive Dominator", "weight": 40}
-P2: {"role": "Logical Analyst", "weight": 25}
-P3: {"role": "Data Driven Speaker", "weight": 20}
-P4: {"role": "Corporate Professional", "weight": 10}
-P5: {"role": "Introvert", "weight": 5}
-P6: {"role": "Controversial Speaker", "weight": 15}
+{
+    "P1": {"role": "Aggressive Dominator", "weight": 40},
+    "P2": {"role": "Logical Analyst", "weight": 25},
+    "P3": {"role": "Data Driven Speaker", "weight": 20},
+    "P4": {"role": "Corporate Professional", "weight": 10},
+    "P5": {"role": "Introvert", "weight": 5},
+    "P6": {"role": "Controversial Speaker", "weight": 15}
+}

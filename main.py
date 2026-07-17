@@ -36,31 +36,40 @@ recognizer = sr.Recognizer()
 
 TOPIC = input("Enter GD Topic: ")
 
-participants = {
-    "P1": {"role": "Aggressive Dominator", "weight": 40},
-    "P2": {"role": "Logical Analyst", "weight": 25},
-    "P3": {"role": "Data Driven Speaker", "weight": 20},
-    "P4": {"role": "Corporate Professional", "weight": 10},
-    "P5": {"role": "Introvert", "weight": 5}
-}
+def get_default_participants():
+    return {
+        "P1": {"role": "Aggressive Dominator", "weight": 40},
+        "P2": {"role": "Logical Analyst", "weight": 25},
+        "P3": {"role": "Data Driven Speaker", "weight": 20},
+        "P4": {"role": "Corporate Professional", "weight": 10},
+        "P5": {"role": "Introvert", "weight": 5}
+    }
+
+def load_participants():
+    participants_path = os.path.join(os.path.dirname(__file__), "participants.json")
+    try:
+        with open(participants_path, "r", encoding="utf-8") as f:
+            data = json.load(f)
+        if isinstance(data, dict) and data:
+            return data
+    except (FileNotFoundError, json.JSONDecodeError):
+        pass
+    return get_default_participants()
+
+participants = load_participants()
 
 voice_map = {
     "P1": "en-US-GuyNeural",
     "P2": "en-US-JennyNeural",
     "P3": "en-US-DavisNeural",
     "P4": "en-US-AriaNeural",
-    "P5": "en-US-TonyNeural"
+    "P5": "en-US-TonyNeural",
+    "P6": "en-US-SaraNeural"
 }
 
 # 2. Relationship Graph
-relationships = {
-    "P1": {"likes": [], "disagrees_with": []},
-    "P2": {"likes": [], "disagrees_with": []},
-    "P3": {"likes": [], "disagrees_with": []},
-    "P4": {"likes": [], "disagrees_with": []},
-    "P5": {"likes": [], "disagrees_with": []},
-    "USER": {"likes": [], "disagrees_with": []}
-}
+relationships = {pid: {"likes": [], "disagrees_with": []} for pid in participants}
+relationships["USER"] = {"likes": [], "disagrees_with": []}
 
 history = []
 turn = 1
