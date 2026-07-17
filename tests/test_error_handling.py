@@ -48,6 +48,31 @@ class TestCustomParticipants(unittest.TestCase):
             result = self.main.get_voice_input()
             self.assertEqual(result, "")
 
+    def test_load_history_with_data(self):
+        test_history = [{"speaker": "P1", "message": "Hello"}]
+        with patch('main.os.path.exists', return_value=True):
+            with patch('builtins.open', mock_open(read_data=json.dumps(test_history))):
+                result = self.main.load_history()
+                self.assertEqual(len(result), 1)
+                self.assertEqual(result[0]["speaker"], "P1")
+
+    def test_load_history_empty_list(self):
+        with patch('main.os.path.exists', return_value=True):
+            with patch('builtins.open', mock_open(read_data="[]")):
+                result = self.main.load_history()
+                self.assertEqual(result, [])
+
+    def test_load_history_file_not_found(self):
+        with patch('main.os.path.exists', return_value=True):
+            with patch('builtins.open', side_effect=FileNotFoundError):
+                result = self.main.load_history()
+                self.assertEqual(result, [])
+
+    def test_load_history_missing_file(self):
+        with patch('main.os.path.exists', return_value=False):
+            result = self.main.load_history()
+            self.assertEqual(result, [])
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -71,7 +71,26 @@ voice_map = {
 relationships = {pid: {"likes": [], "disagrees_with": []} for pid in participants}
 relationships["USER"] = {"likes": [], "disagrees_with": []}
 
-history = []
+def load_history():
+    memory_path = "memory.json"
+    if os.path.exists(memory_path):
+        try:
+            with open(memory_path, "r", encoding="utf-8") as f:
+                data = json.load(f)
+            if isinstance(data, list) and data:
+                return data
+        except (json.JSONDecodeError, FileNotFoundError):
+            pass
+    return []
+
+history = load_history()
+if history:
+    resume = input(f"Previous discussion found ({len(history)} turns). Continue? (y/n): ")
+    if resume.lower() != "y":
+        history = []
+        print("Starting fresh session.")
+    else:
+        print(f"Resuming with {len(history)} turns of history.")
 turn = 1
 
 async def speak(text, voice, current_turn):
