@@ -7,6 +7,7 @@ const COLORS = [
   '#45b7d1',
   '#f9ca24',
   '#a29bfe',
+  '#fd79a8',
 ];
 
 export default function NamePlate({ name, position, seatIndex = 0, isActive = false }) {

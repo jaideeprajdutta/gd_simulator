@@ -29,6 +29,7 @@ const AVATAR_CONFIGS = [
   { name: 'Data Driven Speaker', seat: 2 },
   { name: 'Corporate Professional', seat: 3 },
   { name: 'Introvert', seat: 4 },
+  { name: 'Controversial Speaker', seat: 5 },
 ];
 
 const SEAT_POSITIONS = getSeatPositions();

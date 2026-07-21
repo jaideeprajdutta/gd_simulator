@@ -6,6 +6,7 @@ const speakerColors = {
   P3: '#45b7d1',
   P4: '#f9ca24',
   P5: '#a29bfe',
+  P6: '#fd79a8',
   USER: '#ffffff',
 };
 
@@ -19,10 +20,13 @@ export default function GDOverlay({
   topic,
   isListening,
   isAudioPlaying,
+  simActive,
+  errorMessage,
   onStart,
   onSendMessage,
   onRequestMic,
   onUserInterrupt,
+  onStop,
 }) {
   const [inputText, setInputText] = useState('');
   const [showTopicInput, setShowTopicInput] = useState(!topic);
@@ -197,27 +201,54 @@ export default function GDOverlay({
       {simStarted && (
         <>
           <div style={{
-            position: 'absolute', top: '16px', left: '50%',
-            transform: 'translateX(-50%)', zIndex: 50,
-            pointerEvents: 'none', textAlign: 'center',
-          }}>
-            <div style={{
-              background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
-              padding: '8px 20px', borderRadius: '20px',
-              border: '1px solid rgba(255,255,255,0.1)',
-              display: 'flex', alignItems: 'center', gap: '8px',
+              position: 'absolute', top: '16px', left: '50%',
+              transform: 'translateX(-50%)', zIndex: 50,
+              pointerEvents: 'auto', textAlign: 'center',
             }}>
-              <span style={{ color: connected ? '#4ecdc4' : '#ff6b6b', fontSize: '10px' }}>●</span>
-              <span style={{ color: '#aaa', fontSize: '13px' }}>{topic || topicText}</span>
+              <div style={{
+                background: 'rgba(0,0,0,0.5)', backdropFilter: 'blur(8px)',
+                padding: '8px 20px', borderRadius: '20px',
+                border: '1px solid rgba(255,255,255,0.1)',
+                display: 'flex', alignItems: 'center', gap: '8px',
+              }}>
+                <span style={{ color: connected ? '#4ecdc4' : '#ff6b6b', fontSize: '10px' }}>●</span>
+                <span style={{ color: '#aaa', fontSize: '13px' }}>{topic || topicText}</span>
+                {simActive && (
+                  <button
+                    onClick={onStop}
+                    style={{
+                      marginLeft: '8px', padding: '4px 12px', fontSize: '11px',
+                      borderRadius: '12px', border: '1px solid #ff6b6b',
+                      background: 'rgba(255,107,107,0.15)', color: '#ff6b6b',
+                      cursor: 'pointer', fontWeight: 600,
+                    }}
+                  >
+                    Stop
+                  </button>
+                )}
+              </div>
             </div>
-          </div>
+
+          {errorMessage && (
+            <div style={{
+              position: 'absolute', top: '80px', left: '50%',
+              transform: 'translateX(-50%)', zIndex: 100,
+              background: 'rgba(255,107,107,0.15)', backdropFilter: 'blur(8px)',
+              padding: '10px 20px', borderRadius: '10px',
+              border: '1px solid #ff6b6b', color: '#ff6b6b',
+              fontSize: '13px', maxWidth: '500px', textAlign: 'center',
+              pointerEvents: 'none',
+            }}>
+              {errorMessage}
+            </div>
+          )}
 
           <div style={{
-            position: 'absolute', bottom: '100px', left: '50%',
-            transform: 'translateX(-50%)', zIndex: 50,
-            pointerEvents: 'none', textAlign: 'center',
-            maxWidth: '600px', width: '90%',
-          }}>
+              position: 'absolute', bottom: '100px', left: '50%',
+              transform: 'translateX(-50%)', zIndex: 50,
+              pointerEvents: 'none', textAlign: 'center',
+              maxWidth: '600px', width: '90%',
+            }}>
             {(isSpeaking || isAudioPlaying) && currentText && (
               <div style={{
                 background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(8px)',

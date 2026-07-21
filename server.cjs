@@ -25,7 +25,8 @@ const VOICE_MAP = {
   P2: 'en-US-JennyNeural',
   P3: 'en-US-BrianNeural',
   P4: 'en-US-AriaNeural',
-  P5: 'en-US-ChristopherNeural',
+  P5: 'en-US-TonyNeural',
+  P6: 'en-US-SaraNeural',
 };
 
 const PARTICIPANTS = [
@@ -34,6 +35,7 @@ const PARTICIPANTS = [
   { id: 'P3', name: 'Data Driven Speaker', weight: 20, seatIndex: 2 },
   { id: 'P4', name: 'Corporate Professional', weight: 10, seatIndex: 3 },
   { id: 'P5', name: 'Introvert', weight: 5, seatIndex: 4 },
+  { id: 'P6', name: 'Controversial Speaker', weight: 15, seatIndex: 5 },
 ];
 
 const AUDIO_DIR = path.join(__dirname, 'dist', 'audio');
@@ -347,6 +349,18 @@ class Simulation {
     this.send({ type: 'SIMULATION_END', turnCount: this.turn });
     this.running = false;
     currentSimulation = null;
+    this._cleanupAudio();
+  }
+
+  _cleanupAudio() {
+    try {
+      const files = fs.readdirSync(AUDIO_DIR);
+      for (const file of files) {
+        if (file.endsWith('.mp3')) {
+          fs.unlinkSync(path.join(AUDIO_DIR, file));
+        }
+      }
+    } catch (_) {}
   }
 
   _askUser() {
@@ -420,6 +434,7 @@ class Simulation {
     }
     this.send({ type: 'SIMULATION_END', turnCount: this.turn });
     currentSimulation = null;
+    this._cleanupAudio();
   }
 
   _delay(ms) {

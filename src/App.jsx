@@ -18,7 +18,9 @@ export default function App() {
     isSpeaking: false,
     waitingForUser: false,
     connected: false,
+    errorMessage: null,
   });
+  const [simActive, setSimActive] = useState(false);
 
   const wsRef = useRef(null);
   const listenersRef = useRef(new Map());
@@ -230,6 +232,18 @@ export default function App() {
 
       case 'SIMULATION_START':
         setTopic(event.topic);
+        setSimActive(true);
+        break;
+
+      case 'SIMULATION_ERROR':
+        setSpeakerInfo((prev) => ({
+          ...prev, isSpeaking: false, waitingForUser: false,
+          errorMessage: event.message || 'An error occurred during simulation',
+        }));
+        break;
+
+      case 'ERROR':
+        console.error('[Simulation Error]', event.message);
         break;
 
       case 'SIMULATION_END':
@@ -245,8 +259,9 @@ export default function App() {
         }
         setSpeakerInfo((prev) => ({
           ...prev, isSpeaking: false, waitingForUser: false,
-          currentSpeaker: null, currentText: '', currentSpeakerName: '',
+          currentSpeaker: null, currentText: '', currentSpeakerName: '', errorMessage: null,
         }));
+        setSimActive(false);
         break;
     }
   }, [playAudio]);
@@ -260,6 +275,8 @@ export default function App() {
       onWsEvent('USER_TIMEOUT', (d) => handleGdEvent(d)),
       onWsEvent('SIMULATION_START', (d) => handleGdEvent(d)),
       onWsEvent('SIMULATION_END', (d) => handleGdEvent(d)),
+      onWsEvent('SIMULATION_ERROR', (d) => handleGdEvent(d)),
+      onWsEvent('ERROR', (d) => handleGdEvent(d)),
     ];
     return () => unsubs.forEach((u) => u());
   }, [onWsEvent, handleGdEvent]);
@@ -275,6 +292,10 @@ export default function App() {
 
   const handleSendMessage = useCallback((text) => {
     sendWs({ type: 'USER_MESSAGE', text });
+  }, [sendWs]);
+
+  const handleStop = useCallback(() => {
+    sendWs({ type: 'STOP_SIMULATION' });
   }, [sendWs]);
 
   const handleRequestMic = useCallback(() => {
@@ -356,10 +377,13 @@ export default function App() {
         topic={topic}
         isListening={isListening}
         isAudioPlaying={isAudioPlaying}
+        simActive={simActive}
+        errorMessage={speakerInfo.errorMessage}
         onStart={handleStart}
         onSendMessage={handleSendMessage}
         onRequestMic={handleRequestMic}
         onUserInterrupt={handleUserInterrupt}
+        onStop={handleStop}
       />
 
       <Leva collapsed />
